@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express()
 const port = process.env.PORT || 5000
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 // middleware
@@ -34,12 +34,26 @@ async function run() {
 
 
     const taskCollection = client.db("tasks").collection("task");
+    const taskUsersCollection = client.db("taskUsers").collection("taskUser");
 
-    await client.connect();
+    // await client.connect();
+
+    app.get('/viewtask/:id', async(req, res) =>{
+      const id = req.params.id 
+      const filter = { _id: new ObjectId(id) }
+      const result = await taskCollection.findOne(filter)    
+      res.send(result)
+    })
 
     app.get('/viewtask', async(req, res) =>{
       const cursor = taskCollection.find()
-      const result = cursor.toArray()
+      const result = await cursor.toArray()
+      res.send(result)
+    })
+
+    app.post('/users', async(req, res) =>{
+      const userInfo = req.body 
+      const result = await taskUsersCollection.insertOne(userInfo)
       res.send(result)
     })
 
@@ -49,9 +63,16 @@ async function run() {
       res.send(result)
     })
 
+    app.delete('/viewtask/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const result = await taskCollection.deleteOne(query)
+      res.send(result)
+  })
+
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
